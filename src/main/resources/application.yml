@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: wishlist
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wishlist_db
+    username: postgres
+    password: "1318"        # если пароль пустой, оставь так, либо поставь свой
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # update — чтобы Hibernate сам создавал таблицы, пока нет Flyway миграций
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  redis:
+    host: localhost
+    port: 6379
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+
+server:
+  port: 8080
