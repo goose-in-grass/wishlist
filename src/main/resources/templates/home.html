@@ -18,7 +18,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="#">WishList</a>
-
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -35,11 +34,23 @@
 </nav>
 
 <!-- Контент страницы -->
-<main class="container text-center py-5">
-    <h1 class="mb-3" th:text="${title}">Главная страница</h1>
-    <p class="lead">Добро пожаловать в ваш персональный WishList!</p>
+<main class="container py-5">
+    <h1 class="text-center mb-4" th:text="${title}">Главная страница</h1>
 
-    <a href="#" class="btn btn-primary btn-lg mt-3">Перейти к желаниям</a>
+    <p class="lead text-center mb-5">Добро пожаловать в ваш персональный WishList!</p>
+
+    <!-- Вывод всех пользователей -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div th:each="user : ${users}" class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${user.name}">Имя</h5>
+                    <p class="card-text mb-1"><strong>Email:</strong> <span th:text="${user.email}">user@mail.com</span></p>
+                    <p class="card-text"><strong>Возраст:</strong> <span th:text="${user.age}">30</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <!-- Подвал -->
