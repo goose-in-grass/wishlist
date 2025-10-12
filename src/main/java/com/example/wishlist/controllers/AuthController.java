@@ -29,4 +29,6 @@ public class AuthController {
                     .body(new UserResponseDto(null, e.getMessage(), null, null));
         }
     }
+
+
 }
