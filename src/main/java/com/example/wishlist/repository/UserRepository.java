@@ -5,5 +5,6 @@ import org.springframework.data.repository.CrudRepository;
 
 //Указали в <> с чем работаем и тип данных для PK
 public interface UserRepository extends CrudRepository<User, Long> {
-
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 }
