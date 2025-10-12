@@ -13,33 +13,22 @@
             crossorigin="anonymous">
 </head>
 
-<body>
-<!-- Навигационная панель -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="#">WishList</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<body class="bg-light text-center">
 
-        <div id="navbarMenu" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link active" href="#">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">О проекте</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Список желаний</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Контакты</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<!-- Приветственный блок с кнопкой регистрации -->
+<div class="container py-5">
+    <h1 class="mb-4">Добро пожаловать в WishList</h1>
+    <p class="lead mb-4">Создай свой список желаний — начни с регистрации</p>
+    <a href="/register" class="btn btn-primary btn-lg">
+        Зарегистрироваться
+    </a>
+</div>
 
-<!-- Контент страницы -->
+<!-- Контент страницы: список пользователей -->
 <main class="container py-5">
     <h1 class="text-center mb-4" th:text="${title}">Главная страница</h1>
-
     <p class="lead text-center mb-5">Добро пожаловать в ваш персональный WishList!</p>
 
-    <!-- Вывод всех пользователей -->
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div th:each="user : ${users}" class="card mb-3 shadow-sm">
@@ -62,5 +51,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
+
 </body>
 </html>
