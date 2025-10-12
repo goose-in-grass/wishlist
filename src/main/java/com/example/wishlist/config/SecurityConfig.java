@@ -13,18 +13,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // отключение CSRF через лямбду
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register").permitAll()
+                        .requestMatchers("/register", "/api/register").permitAll() // <-- разрешаем фронту
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .permitAll()
+                        .loginPage("/").permitAll()
                 );
 
-        return http.build(); // важно вызвать build()
+        return http.build();
     }
+
 
 
     @Bean
