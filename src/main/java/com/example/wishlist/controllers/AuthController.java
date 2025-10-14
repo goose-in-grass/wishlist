@@ -5,9 +5,13 @@ import com.example.wishlist.service.UserRegistrationRequest;
 import com.example.wishlist.service.UserResponseDto;
 import com.example.wishlist.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@RestController // <-- важно!
+import java.util.Map;
+
+@RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class AuthController {
@@ -19,16 +23,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> register(@RequestBody UserRegistrationRequest request) {
+    public ResponseEntity<?> register(@RequestBody UserRegistrationRequest request) {
         try {
             UserResponseDto response = userService.register(request);
             return ResponseEntity.ok(response);
         } catch (UserAlreadyExistsException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new UserResponseDto(null, e.getMessage(), null, null));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
-
-
 }
+

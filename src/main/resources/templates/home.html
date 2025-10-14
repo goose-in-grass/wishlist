@@ -15,27 +15,33 @@
 
 <body class="bg-light text-center">
 
-<!-- Приветственный блок с кнопкой регистрации -->
+<!-- Приветственный блок -->
 <div class="container py-5">
     <h1 class="mb-4">Добро пожаловать в WishList</h1>
-    <p class="lead mb-4">Создай свой список желаний — начни с регистрации</p>
-    <a href="/register" class="btn btn-primary btn-lg">
-        Зарегистрироваться
-    </a>
+
+    <div th:if="${currentUser != null}">
+        <p class="lead mb-4">Вы вошли как: <strong th:text="${currentUser.username}">username</strong></p>
+        <p>Email: <span th:text="${currentUser.email}">user@mail.com</span></p>
+        <a href="/logout" class="btn btn-danger btn-lg mt-3">Выйти</a>
+    </div>
+
+    <div th:if="${currentUser == null}">
+        <p class="lead mb-4">Создай свой список желаний — начни с регистрации</p>
+        <a href="/register" class="btn btn-primary btn-lg me-2">Зарегистрироваться</a>
+        <a href="/login" class="btn btn-success btn-lg">Войти</a>
+    </div>
 </div>
 
-<!-- Контент страницы: список пользователей -->
-<main class="container py-5">
-    <h1 class="text-center mb-4" th:text="${title}">Главная страница</h1>
-    <p class="lead text-center mb-5">Добро пожаловать в ваш персональный WishList!</p>
-
+<!-- Список всех пользователей -->
+<main class="container py-5" th:if="${users != null}">
+    <h2 class="text-center mb-4">Пользователи</h2>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div th:each="user : ${users}" class="card mb-3 shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title" th:text="${user.name}">Имя</h5>
+                    <h5 class="card-title" th:text="${user.username}">Имя</h5>
                     <p class="card-text mb-1"><strong>Email:</strong> <span th:text="${user.email}">user@mail.com</span></p>
-                    <p class="card-text"><strong>Возраст:</strong> <span th:text="${user.age}">30</span></p>
+                    <p class="card-text"><strong>Дата регистрации:</strong> <span th:text="${user.createdAt}">2025-10-14</span></p>
                 </div>
             </div>
         </div>

@@ -14,22 +14,31 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/api/register").permitAll() // <-- разрешаем фронту
+                        // Доступ без авторизации:
+                        .requestMatchers("/", "/login", "/register", "/api/register", "/css/**", "/js/**").permitAll()
+                        // Всё остальное — только для авторизованных
                         .anyRequest().authenticated()
                 )
+
                 .formLogin(form -> form
-                        .loginPage("/").permitAll()
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/home", true)
+                        .permitAll()
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
                 );
 
         return http.build();
     }
-
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
-

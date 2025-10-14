@@ -45,11 +45,11 @@
         resultField.className = 'mt-3 text-center fw-semibold';
 
         try {
-            const response = await fetch("http://localhost:8080/api/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-});
+            const response = await fetch("/api/register", { // относительный путь, лучше для локальной работы
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
 
             // Читаем тело один раз как текст
             const text = await response.text();
@@ -64,9 +64,13 @@
             }
 
             if (response.ok) {
+                // Показать сообщение и перейти на страницу логина
                 resultField.textContent = "✅ Регистрация прошла успешно!";
                 resultField.classList.add("text-success");
                 document.getElementById('registerForm').reset();
+
+                // Перенаправление на страницу логина
+                window.location.href = "/login";
             } else {
                 resultField.textContent = "⚠️ " + (result.message || `Ошибка ${response.status}`);
                 resultField.classList.add("text-warning");
@@ -79,6 +83,7 @@
         }
     });
 </script>
+
 
 
 </body>
