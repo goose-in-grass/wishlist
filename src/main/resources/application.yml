@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/wishlist_db
     username: postgres
-    password: "1318"        # если пароль пустой, оставь так, либо поставь свой
+    password: ""        # если пароль пустой, оставь так, либо поставь свой
     driver-class-name: org.postgresql.Driver
 
   jpa:
