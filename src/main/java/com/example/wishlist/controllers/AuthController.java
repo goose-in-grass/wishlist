@@ -1,12 +1,10 @@
 package com.example.wishlist.controllers;
 
 import com.example.wishlist.UncheckedException.UserAlreadyExistsException;
-import com.example.wishlist.service.UserRegistrationRequest;
-import com.example.wishlist.service.UserResponseDto;
-import com.example.wishlist.service.UserService;
+import com.example.wishlist.service.User.UserRegistrationRequest;
+import com.example.wishlist.service.User.UserResponseDto;
+import com.example.wishlist.service.User.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
