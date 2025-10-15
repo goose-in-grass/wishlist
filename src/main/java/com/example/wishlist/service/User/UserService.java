@@ -1,9 +1,8 @@
-package com.example.wishlist.service;
+package com.example.wishlist.service.User;
 
 import com.example.wishlist.UncheckedException.UserAlreadyExistsException;
 import com.example.wishlist.models.User;
 import com.example.wishlist.repository.UserRepository;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

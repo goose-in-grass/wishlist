@@ -1,4 +1,4 @@
-package com.example.wishlist.service;
+package com.example.wishlist.service.User;
 
 public class UserRegistrationRequest {
 

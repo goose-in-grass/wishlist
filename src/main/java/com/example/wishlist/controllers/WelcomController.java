@@ -33,15 +33,24 @@ public class WelcomController {
 
     @GetMapping("/home")
     public String home(Model model, Authentication authentication) {
+        // пример: если пользователь не найден, редиректим на products
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return "redirect:/products";
+        }
 
         model.addAttribute("title", "Главная страница");
         model.addAttribute("currentUser", user);
-
-        return "home";
+        return "home"; // home.html
     }
 
-    //TODO: Добавить окно логина с переходом либо на регистрацию, либо на главную страницу
+    @GetMapping("/products")
+    public String productsPage(Model model) {
+        model.addAttribute("title", "Products");
+        return "products"; // products.html в templates
+    }
+
+
 
 }
