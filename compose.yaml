@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: wishlist-db
+    environment:
+      POSTGRES_DB: wishlist
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 0000
+    ports:
+      - "5432:5432"
+    volumes:
+      - wishlist_db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: wishlist-app
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+volumes:
+  wishlist_db_data:
