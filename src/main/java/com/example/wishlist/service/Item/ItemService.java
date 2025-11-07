@@ -1,7 +1,9 @@
 package com.example.wishlist.service.Item;
 
+import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.models.Item;
 import com.example.wishlist.repository.ItemRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,10 +18,12 @@ public class ItemService {
         this.itemRepository = itemRepository;
     }
 
+    @Cacheable(value = "items")
     public List<ItemDTO> findAll() {
+        System.out.println(">>> Берем из БД, не из Redis");
         return itemRepository.findAll()
                 .stream()
-                .map(this::toDTO)
+                .map(item -> new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt()))
                 .toList();
     }
 

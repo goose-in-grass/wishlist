@@ -1,8 +1,7 @@
 package com.example.wishlist.controllers;
 
-import com.example.wishlist.service.Item.ItemDTO;
+import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.service.Item.ItemService;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,13 +20,11 @@ public class ItemController {
     }
 
     // 1. GET /api/items — список всех
-    //TODO проверить правильно ли это
     @GetMapping
-    @Cacheable(value = "items")
     public ResponseEntity<List<ItemDTO>> getAll() {
-        List<ItemDTO> items = itemService.findAll();
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(itemService.findAll());
     }
+
 
     // 2. POST /api/items — создание
     @PostMapping
