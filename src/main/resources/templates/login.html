@@ -19,12 +19,12 @@
         .form {
             display: flex;
             flex-direction: column; /* Элементы идут сверху вниз */
-            gap: 10px; /* Расстояние между элементами */
-            width: 350px; /* Ширина формы */
+            gap: 14px; /* Расстояние между элементами (было 10px) */
+            width: 420px; /* Ширина формы (было 350px) */
             background-color: #fff; /* Белый фон формы */
-            border-radius: 20px; /* Закруглённые углы */
-            padding: 30px 25px; /* Внутренние отступы */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Тень формы */
+            border-radius: 24px; /* Закруглённые углы (было 20px) */
+            padding: 36px 28px; /* Внутренние отступы */
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08); /* Тень формы */
         }
 
         /* === Заголовок формы === */
@@ -32,20 +32,21 @@
             color: black;
             font-weight: bold; /* Жирный текст */
             text-align: center; /* Центрирование текста */
-            font-size: 22px; /* Размер шрифта */
-            margin-bottom: 4px; /* Отступ снизу */
+            font-size: 25px; /* Размер шрифта (было 22px) */
+            margin-bottom: 6px; /* Отступ снизу */
         }
 
         /* === Подзаголовок (текст под формой) === */
         .sub {
             text-align: center;
             color: black;
-            font-size: 14px;
+            font-size: 16px; /* Было 14px */
         }
 
-        /* === Ссылки в подзаголовке (например: “Войти” / “Регистрация”) === */
+        /* === Ссылки в подзаголовке === */
         .sub a {
             color: rgb(23, 111, 211); /* Голубой акцент для ссылок */
+            font-weight: 600; /* Немного выразительнее */
         }
 
         /* === Общие стили для полей ввода и кнопки === */
@@ -53,21 +54,24 @@
             border: none; /* Без рамки */
             outline: none; /* Без подсветки при фокусе */
             width: 95%; /* На всю ширину формы */
-            padding: 14px 12px; /* Внутренние отступы */
+            padding: 16px 12px; /* Было 14px */
+            font-size: 16px; /* Было 14px */
             background-color: rgb(247, 243, 243); /* Светло-серый фон */
-            border-radius: 10px; /* Закруглённые углы */
-            box-shadow: 12.5px 12.5px 10px rgba(0, 0, 0, 0.015),
+            border-radius: 12px; /* Было 10px */
+            box-shadow: 14px 14px 12px rgba(0, 0, 0, 0.015),
                         100px 100px 80px rgba(0, 0, 0, 0.03); /* Мягкая тень */
         }
 
         /* === Кнопка отправки === */
         button {
-            margin-top: 10px; /* Отступ сверху */
+            margin-top: 12px; /* Было 10px */
             background-color: rgb(23, 111, 211); /* Голубой фон кнопки */
             color: #fff; /* Белый текст */
             text-transform: uppercase; /* Заглавные буквы */
             font-weight: bold; /* Жирный текст */
+            font-size: 17px; /* Крупнее текст */
             cursor: pointer; /* Курсор-рука при наведении */
+            transition: background-color 0.2s ease;
         }
 
         /* === Эффект при фокусе на поле ввода === */
@@ -81,8 +85,6 @@
             background-color: rgb(18, 90, 180); /* Более тёмный синий при наведении */
         }
     </style>
-
-
 </head>
 <body>
 
