@@ -3,6 +3,7 @@ package com.example.wishlist.service.Item;
 import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.models.Item;
 import com.example.wishlist.repository.ItemRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -18,22 +19,23 @@ public class ItemService {
         this.itemRepository = itemRepository;
     }
 
+    // Кэшируем только список всех объектов
     @Cacheable(value = "items")
     public List<ItemDTO> findAll() {
         System.out.println(">>> Берем из БД, не из Redis");
         return itemRepository.findAll()
                 .stream()
-                .map(item -> new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt()))
+                .map(this::toDTO)
                 .toList();
     }
 
-    public  ItemDTO create(ItemDTO dto) {
-        // Проверка на уникальность
+    // При создании — очищаем кэш, чтобы при следующем GET данные обновились
+    @CacheEvict(value = "items", allEntries = true)
+    public ItemDTO create(ItemDTO dto) {
         if (itemRepository.existsByTitle(dto.getTitle())) {
             throw new IllegalArgumentException("Item with title '" + dto.getTitle() + "' already exists");
         }
 
-        // Создание новой сущности
         Item item = new Item();
         item.setTitle(dto.getTitle());
         item.setDescription(dto.getDescription());
@@ -43,38 +45,42 @@ public class ItemService {
         return toDTO(saved);
     }
 
-    private ItemDTO toDTO(Item item) {
-        return new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt());
-    }
-
+    @CacheEvict(value = "items", allEntries = true)
     public ItemDTO update(Long id, ItemDTO itemDTO) {
-        // Ищем существующий объект
         Item existing = itemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Item with id " + id + " not found"));
 
-        // Можно добавить проверку уникальности title, если нужно
         if (!existing.getTitle().equals(itemDTO.getTitle()) &&
                 itemRepository.existsByTitle(itemDTO.getTitle())) {
             throw new IllegalArgumentException("Item with title '" + itemDTO.getTitle() + "' already exists");
         }
 
-        // Обновляем поля
         existing.setTitle(itemDTO.getTitle());
         existing.setDescription(itemDTO.getDescription());
-        // createdAt не трогаем, это дата создания
 
         Item saved = itemRepository.save(existing);
         return toDTO(saved);
     }
 
+    @CacheEvict(value = "items", allEntries = true)
     public void delete(Long id) {
-        // Проверка на существование, чтобы не было исключения из JPA
         if (!itemRepository.existsById(id)) {
             throw new IllegalArgumentException("Item with id " + id + " not found");
         }
-
         itemRepository.deleteById(id);
     }
 
+    private ItemDTO toDTO(Item item) {
+        return new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt());
+    }
 }
-
+/*
+Что теперь происходит:
+Первый запрос GET /api/items:
+Redis пуст → findAll() идёт в БД → возвращает список и сохраняет его в кэше.
+Следующие GET /api/items:
+Всё берётся напрямую из Redis, БД даже не трогается.
+Любой POST, PUT или DELETE:
+Удаляет весь кэш items.
+При следующем GET список снова тянется из БД, и новый кэш обновляется свежими данными.
+ */
