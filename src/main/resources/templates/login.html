@@ -2,30 +2,100 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Вход</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Вход — WishList</title>
+    <style>
+        /* === Основные настройки страницы === */
+        body {
+            background-color: #f6f7fb; /* Светлый фон страницы */
+            font-family: Arial, sans-serif; /* Шрифт интерфейса */
+            display: flex; /* Центрирование формы */
+            justify-content: center; /* Горизонтальное выравнивание */
+            align-items: center; /* Вертикальное выравнивание */
+            height: 100vh; /* Высота на весь экран */
+            margin: 0; /* Убираем отступы браузера */
+        }
+
+        /* === Контейнер формы === */
+        .form {
+            display: flex;
+            flex-direction: column; /* Элементы идут сверху вниз */
+            gap: 10px; /* Расстояние между элементами */
+            width: 350px; /* Ширина формы */
+            background-color: #fff; /* Белый фон формы */
+            border-radius: 20px; /* Закруглённые углы */
+            padding: 30px 25px; /* Внутренние отступы */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Тень формы */
+        }
+
+        /* === Заголовок формы === */
+        .title {
+            color: black;
+            font-weight: bold; /* Жирный текст */
+            text-align: center; /* Центрирование текста */
+            font-size: 22px; /* Размер шрифта */
+            margin-bottom: 4px; /* Отступ снизу */
+        }
+
+        /* === Подзаголовок (текст под формой) === */
+        .sub {
+            text-align: center;
+            color: black;
+            font-size: 14px;
+        }
+
+        /* === Ссылки в подзаголовке (например: “Войти” / “Регистрация”) === */
+        .sub a {
+            color: rgb(23, 111, 211); /* Голубой акцент для ссылок */
+        }
+
+        /* === Общие стили для полей ввода и кнопки === */
+        .input, button {
+            border: none; /* Без рамки */
+            outline: none; /* Без подсветки при фокусе */
+            width: 95%; /* На всю ширину формы */
+            padding: 14px 12px; /* Внутренние отступы */
+            background-color: rgb(247, 243, 243); /* Светло-серый фон */
+            border-radius: 10px; /* Закруглённые углы */
+            box-shadow: 12.5px 12.5px 10px rgba(0, 0, 0, 0.015),
+                        100px 100px 80px rgba(0, 0, 0, 0.03); /* Мягкая тень */
+        }
+
+        /* === Кнопка отправки === */
+        button {
+            margin-top: 10px; /* Отступ сверху */
+            background-color: rgb(23, 111, 211); /* Голубой фон кнопки */
+            color: #fff; /* Белый текст */
+            text-transform: uppercase; /* Заглавные буквы */
+            font-weight: bold; /* Жирный текст */
+            cursor: pointer; /* Курсор-рука при наведении */
+        }
+
+        /* === Эффект при фокусе на поле ввода === */
+        .input:focus {
+            border: 1px solid rgb(23, 111, 211); /* Синяя рамка при фокусе */
+            background-color: #fff; /* Белый фон при активном вводе */
+        }
+
+        /* === Эффект при наведении на кнопку === */
+        button:hover {
+            background-color: rgb(18, 90, 180); /* Более тёмный синий при наведении */
+        }
+    </style>
+
+
 </head>
 <body>
-<div class="container py-5">
-    <h1 class="mb-4 text-center">Вход</h1>
 
-    <form method="post" action="/login" class="mx-auto" style="max-width: 400px;">
-        <div class="mb-3 text-start">
-            <label for="username" class="form-label">Имя пользователя</label>
-            <input type="text" class="form-control" id="username" name="username" required>
-        </div>
+<form method="post" action="/login" class="form">
+    <div class="title">Вход</div>
 
-        <div class="mb-3 text-start">
-            <label for="password" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="password" name="password" required>
-        </div>
+    <input type="text" class="input" name="username" placeholder="Имя пользователя" required>
+    <input type="password" class="input" name="password" placeholder="Пароль" required>
 
-        <button type="submit" class="btn btn-success w-100">Войти</button>
-    </form>
+    <button type="submit">Войти</button>
 
-    <p class="mt-3 text-center">
-        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
-    </p>
-</div>
+    <p class="sub">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+</form>
+
 </body>
 </html>
