@@ -3,6 +3,7 @@ package com.example.wishlist.service.Item;
 import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.models.Item;
 import com.example.wishlist.repository.ItemRepository;
+import com.example.wishlist.service.rabbit.WishlistEventProducer;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,11 @@ import java.util.List;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final WishlistEventProducer eventProducer;
 
-    public ItemService(ItemRepository itemRepository) {
+    public ItemService(ItemRepository itemRepository, WishlistEventProducer eventProducer) {
         this.itemRepository = itemRepository;
+        this.eventProducer = eventProducer;
     }
 
     // Кэшируем только список всех объектов
@@ -29,7 +32,7 @@ public class ItemService {
                 .toList();
     }
 
-    // При создании — очищаем кэш, чтобы при следующем GET данные обновились
+    // При создании — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
     public ItemDTO create(ItemDTO dto) {
         if (itemRepository.existsByTitle(dto.getTitle())) {
@@ -42,9 +45,14 @@ public class ItemService {
         item.setCreatedAt(LocalDateTime.now());
 
         Item saved = itemRepository.save(item);
+
+        // Отправляем событие в RabbitMQ
+        eventProducer.sendEvent("CREATE", saved.getId(), saved.getTitle());
+
         return toDTO(saved);
     }
 
+    // При обновлении — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
     public ItemDTO update(Long id, ItemDTO itemDTO) {
         Item existing = itemRepository.findById(id)
@@ -59,28 +67,26 @@ public class ItemService {
         existing.setDescription(itemDTO.getDescription());
 
         Item saved = itemRepository.save(existing);
+
+        // Отправляем событие в RabbitMQ
+        eventProducer.sendEvent("UPDATE", saved.getId(), saved.getTitle());
+
         return toDTO(saved);
     }
 
+    // При удалении — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
     public void delete(Long id) {
         if (!itemRepository.existsById(id)) {
             throw new IllegalArgumentException("Item with id " + id + " not found");
         }
         itemRepository.deleteById(id);
+
+        // Отправляем событие в RabbitMQ
+        eventProducer.sendEvent("DELETE", id, "");
     }
 
     private ItemDTO toDTO(Item item) {
         return new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt());
     }
 }
-/*
-Что теперь происходит:
-Первый запрос GET /api/items:
-Redis пуст → findAll() идёт в БД → возвращает список и сохраняет его в кэше.
-Следующие GET /api/items:
-Всё берётся напрямую из Redis, БД даже не трогается.
-Любой POST, PUT или DELETE:
-Удаляет весь кэш items.
-При следующем GET список снова тянется из БД, и новый кэш обновляется свежими данными.
- */
