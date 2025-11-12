@@ -3,36 +3,32 @@ spring:
     name: wishlist
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/wishlist_db
-    username: postgres
-    password: "0000"
+    url: jdbc:postgresql://postgres:5432/wishlist
+    username: wishlist
+    password: wishlist
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none  # отключаем авто-обновление
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: true
     baseline-on-migrate: true
     baseline-version: 0
 
-  rabbitmq:
-    host: localhost
-    port: 5672
-
   cache:
     type: redis
 
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
-      password:
 
 server:
   port: 8080
