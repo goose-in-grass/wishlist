@@ -143,6 +143,19 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- flywaydb -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>11.7.2</version>
+                <configuration>
+                    <url>jdbc:postgresql://localhost:5432/wishlist_db</url>
+                    <user>postgres</user>
+                    <password>0000</password>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
