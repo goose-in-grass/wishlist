@@ -46,6 +46,9 @@ services:
   wishlist:
     image: wishlist:latest
     build: .
+    volumes:
+      - ~/.m2:/root/.m2       # кеш Maven
+      - ./src/main/resources/application.yml:/app/src/main/resources/application.yml:ro  # проброс конфигов
     restart: "no"
     ports:
       - "8080:8080"

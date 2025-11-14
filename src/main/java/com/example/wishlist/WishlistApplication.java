@@ -19,8 +19,6 @@ public class WishlistApplication {
 }
 
 /*
-
-●
 TODO:
     2.Redis:
         Пользовательские сессии
