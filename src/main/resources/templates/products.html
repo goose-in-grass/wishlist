@@ -61,12 +61,25 @@
             outline: none !important;
             box-shadow: none !important;
         }
+
+        .sort-buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container py-5">
     <h1 class="text-center mb-4">Wishlist</h1>
+
+    <!-- КНОПКИ СОРТИРОВКИ -->
+    <div class="sort-buttons">
+        <button class="btn btn-outline-primary btn-sm" onclick="loadSorted('date','asc')">Дата ↑</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="loadSorted('date','desc')">Дата ↓</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="loadSorted('alpha','asc')">A → Z</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="loadSorted('alpha','desc')">Z → A</button>
+    </div>
 
     <div id="response" class="row justify-content-center"></div>
 
@@ -75,7 +88,6 @@
     </div>
 </div>
 
-<!-- Красивая кнопка добавления -->
 <button class="floating-btn" title="Добавить желание" onclick="createItem()">+</button>
 
 <script>
@@ -85,7 +97,9 @@
         const container = document.getElementById("response");
         container.innerHTML = '';
 
-        if (!Array.isArray(items)) items = [items];
+        if (!Array.isArray(items)) {
+            items = [items];
+        }
 
         items.forEach(item => {
             const card = document.createElement('div');
@@ -112,6 +126,13 @@
             .then(res => res.json())
             .then(displayResponse)
             .catch(err => displayResponse([{ title: 'Ошибка', description: err.message || err }]));
+    }
+
+    function loadSorted(sortBy, direction) {
+        fetch(`${apiUrl}?sortBy=${sortBy}&direction=${direction}`)
+            .then(res => res.json())
+            .then(displayResponse)
+            .catch(err => alert("Ошибка сортировки: " + (err.message || err)));
     }
 
     function createItem() {
@@ -155,7 +176,6 @@
             .catch(err => alert("Ошибка: " + (err.message || err)));
     }
 
-    // Автозагрузка списка
     getAll();
 </script>
 
