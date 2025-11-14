@@ -22,9 +22,6 @@ public class WishlistApplication {
 
 ●
 TODO:
-    1.Добавить фильтрацию по категориям
-    .
-    .
     2.Redis:
         Пользовательские сессии
     3.RabbitMQ:
