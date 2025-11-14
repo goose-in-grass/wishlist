@@ -19,10 +19,13 @@ public class ItemController {
         this.itemService = itemService;
     }
 
-    // 1. GET /api/items — список всех
+    // 1. GET /api/items — список всех с сортировкой
     @GetMapping
-    public ResponseEntity<List<ItemDTO>> getAll() {
-        return ResponseEntity.ok(itemService.findAll());
+    public ResponseEntity<List<ItemDTO>> getAll(
+            @RequestParam(required = false, defaultValue = "date") String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String direction
+    ) {
+        return ResponseEntity.ok(itemService.findAllSorted(sortBy, direction));
     }
 
 

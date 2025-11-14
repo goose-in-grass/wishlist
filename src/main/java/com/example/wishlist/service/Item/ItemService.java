@@ -4,8 +4,10 @@ import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.models.Item;
 import com.example.wishlist.repository.ItemRepository;
 import com.example.wishlist.service.rabbit.WishlistEventProducer;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,13 +26,36 @@ public class ItemService {
 
     // Кэшируем только список всех объектов
     @Cacheable(value = "items")
-    public List<ItemDTO> findAll() {
+    public List<ItemDTO> findAllSorted(String sortBy, String direction) {
         System.out.println(">>> Берем из БД, не из Redis");
-        return itemRepository.findAll()
+
+        Sort sort = buildSort(sortBy, direction);
+
+        return itemRepository.findAll(sort)
                 .stream()
                 .map(this::toDTO)
                 .toList();
     }
+
+    private Sort buildSort(String sortBy, String direction) {
+        String sortField;
+
+        switch (sortBy) {
+            case "alpha":
+                sortField = "title";
+                break;
+            case "date":
+            default:
+                sortField = "createdAt";
+        }
+
+        Sort.Direction dir =
+                "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        return Sort.by(dir, sortField);
+    }
+
+
 
     // При создании — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
