@@ -1,9 +1,12 @@
 package com.example.wishlist.controllers;
 
 import com.example.wishlist.dto.ItemDTO;
+import com.example.wishlist.models.User;
 import com.example.wishlist.service.Item.ItemService;
+import com.example.wishlist.service.User.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,43 +17,42 @@ import java.util.List;
 public class ItemController {
 
     private final ItemService itemService;
+    private final SecurityUtils securityUtils;
 
-    public ItemController(ItemService itemService) {
+    public ItemController(ItemService itemService, SecurityUtils securityUtils) {
         this.itemService = itemService;
+        this.securityUtils = securityUtils;
     }
 
-    // 1. GET /api/items — список всех с сортировкой
     @GetMapping
-    public ResponseEntity<List<ItemDTO>> getAll(
-            @RequestParam(required = false, defaultValue = "date") String sortBy,
-            @RequestParam(required = false, defaultValue = "asc") String direction
-    ) {
-        return ResponseEntity.ok(itemService.findAllSorted(sortBy, direction));
+    public ResponseEntity<List<ItemDTO>> getAll(Authentication auth,
+                                                @RequestParam(defaultValue = "date") String sortBy,
+                                                @RequestParam(defaultValue = "asc") String direction) {
+        User user = securityUtils.getCurrentUser(auth);
+        return ResponseEntity.ok(itemService.findAllSorted(user, sortBy, direction));
     }
 
-
-    // 2. POST /api/items — создание
     @PostMapping
-    public ResponseEntity<ItemDTO> create(@RequestBody ItemDTO itemDTO) {
-        ItemDTO created = itemService.create(itemDTO);
+    public ResponseEntity<ItemDTO> create(Authentication auth, @RequestBody ItemDTO itemDTO) {
+        User user = securityUtils.getCurrentUser(auth);
+        ItemDTO created = itemService.create(user, itemDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // 3. PUT /api/items/{id} — обновление
     @PutMapping("/{id}")
-    public ResponseEntity<ItemDTO> update(@PathVariable Long id, @RequestBody ItemDTO itemDTO) {
-        ItemDTO updated = itemService.update(id, itemDTO);
+    public ResponseEntity<ItemDTO> update(Authentication auth,
+                                          @PathVariable Long id,
+                                          @RequestBody ItemDTO itemDTO) {
+        User user = securityUtils.getCurrentUser(auth);
+        ItemDTO updated = itemService.update(user, id, itemDTO);
         return ResponseEntity.ok(updated);
     }
 
-    // 4. DELETE /api/items/{id} — удаление
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        itemService.delete(id);
+    public ResponseEntity<Void> delete(Authentication auth, @PathVariable Long id) {
+        User user = securityUtils.getCurrentUser(auth);
+        itemService.delete(user, id);
         return ResponseEntity.noContent().build();
     }
 }
-
-
-
 

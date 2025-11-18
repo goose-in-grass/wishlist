@@ -3,17 +3,22 @@ package com.example.wishlist.service.User;
 import com.example.wishlist.UncheckedException.UserAlreadyExistsException;
 import com.example.wishlist.models.User;
 import com.example.wishlist.repository.UserRepository;
+import com.example.wishlist.service.rabbit.WishlistEventProducer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.EventListener;
 
 @Service
 public class UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WishlistEventProducer eventProducer;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, WishlistEventProducer eventProducer) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.eventProducer = eventProducer;
     }
 
     public UserResponseDto register(UserRegistrationRequest request){
@@ -33,6 +38,8 @@ public class UserService{
 
         // Сохранение в БД
         User savedUser = userRepository.save(user);
+
+        eventProducer.sendEvent("CREATE_USER", savedUser.getId(), savedUser.getUsername(), savedUser.getId());
 
         // Возврат безопасного DTO
         return new UserResponseDto(

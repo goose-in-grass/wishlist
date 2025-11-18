@@ -14,7 +14,7 @@ public class WishlistEventProducer {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void sendEvent(String action, Long itemId, String title) {
+    public void sendEvent(String action, Long itemId, String title, Long id) {
         String message = String.format("%s|%d|%s", action, itemId, title);
         rabbitTemplate.convertAndSend("wishlist-events", message);
         log.info("Sent event to RabbitMQ: {}", message);

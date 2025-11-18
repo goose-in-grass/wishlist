@@ -2,6 +2,7 @@ package com.example.wishlist.service.Item;
 
 import com.example.wishlist.dto.ItemDTO;
 import com.example.wishlist.models.Item;
+import com.example.wishlist.models.User;
 import com.example.wishlist.repository.ItemRepository;
 import com.example.wishlist.service.rabbit.WishlistEventProducer;
 import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
@@ -24,94 +25,70 @@ public class ItemService {
         this.eventProducer = eventProducer;
     }
 
-    // Кэшируем только список всех объектов
     @Cacheable(value = "items")
-    public List<ItemDTO> findAllSorted(String sortBy, String direction) {
-        System.out.println(">>> Берем из БД, не из Redis");
-
+    public List<ItemDTO> findAllSorted(User user, String sortBy, String direction) {
         Sort sort = buildSort(sortBy, direction);
 
-        return itemRepository.findAll(sort)
+        return itemRepository.findByUser(user, sort)
                 .stream()
                 .map(this::toDTO)
                 .toList();
     }
 
-    private Sort buildSort(String sortBy, String direction) {
-        String sortField;
-
-        switch (sortBy) {
-            case "alpha":
-                sortField = "title";
-                break;
-            case "date":
-            default:
-                sortField = "createdAt";
-        }
-
-        Sort.Direction dir =
-                "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        return Sort.by(dir, sortField);
-    }
-
-
-
-    // При создании — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
-    public ItemDTO create(ItemDTO dto) {
-        if (itemRepository.existsByTitle(dto.getTitle())) {
-            throw new IllegalArgumentException("Item with title '" + dto.getTitle() + "' already exists");
+    public ItemDTO create(User user, ItemDTO dto) {
+        if (itemRepository.existsByTitleAndUser(dto.getTitle(), user)) {
+            throw new IllegalArgumentException("Item with title '" + dto.getTitle() + "' already exists for this user");
         }
 
         Item item = new Item();
         item.setTitle(dto.getTitle());
         item.setDescription(dto.getDescription());
         item.setCreatedAt(LocalDateTime.now());
+        item.setUser(user);  // ⚡ привязка к пользователю
 
         Item saved = itemRepository.save(item);
-
-        // Отправляем событие в RabbitMQ
-        eventProducer.sendEvent("CREATE", saved.getId(), saved.getTitle());
+        eventProducer.sendEvent("CREATE", saved.getId(), saved.getTitle(), user.getId());
 
         return toDTO(saved);
     }
 
-    // При обновлении — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
-    public ItemDTO update(Long id, ItemDTO itemDTO) {
-        Item existing = itemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Item with id " + id + " not found"));
+    public ItemDTO update(User user, Long id, ItemDTO itemDTO) {
+        Item existing = itemRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found or does not belong to user"));
 
         if (!existing.getTitle().equals(itemDTO.getTitle()) &&
-                itemRepository.existsByTitle(itemDTO.getTitle())) {
-            throw new IllegalArgumentException("Item with title '" + itemDTO.getTitle() + "' already exists");
+                itemRepository.existsByTitleAndUser(itemDTO.getTitle(), user)) {
+            throw new IllegalArgumentException("Item with title '" + itemDTO.getTitle() + "' already exists for this user");
         }
 
         existing.setTitle(itemDTO.getTitle());
         existing.setDescription(itemDTO.getDescription());
 
         Item saved = itemRepository.save(existing);
-
-        // Отправляем событие в RabbitMQ
-        eventProducer.sendEvent("UPDATE", saved.getId(), saved.getTitle());
+        eventProducer.sendEvent("UPDATE", saved.getId(), saved.getTitle(), user.getId());
 
         return toDTO(saved);
     }
 
-    // При удалении — очищаем кэш и отправляем событие
     @CacheEvict(value = "items", allEntries = true)
-    public void delete(Long id) {
-        if (!itemRepository.existsById(id)) {
-            throw new IllegalArgumentException("Item with id " + id + " not found");
-        }
-        itemRepository.deleteById(id);
+    public void delete(User user, Long id) {
+        Item existing = itemRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found or does not belong to user"));
 
-        // Отправляем событие в RabbitMQ
-        eventProducer.sendEvent("DELETE", id, "");
+        itemRepository.delete(existing);
+        eventProducer.sendEvent("DELETE", id, "", user.getId());
+    }
+
+    private Sort buildSort(String sortBy, String direction) {
+        String sortField = "date".equalsIgnoreCase(sortBy) ? "createdAt" : "title";
+        Sort.Direction dir = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return Sort.by(dir, sortField);
     }
 
     private ItemDTO toDTO(Item item) {
         return new ItemDTO(item.getId(), item.getTitle(), item.getDescription(), item.getCreatedAt());
     }
 }
+
