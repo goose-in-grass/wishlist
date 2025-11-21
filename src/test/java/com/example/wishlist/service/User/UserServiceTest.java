@@ -28,15 +28,17 @@ public class UserServiceTest {
         when(userRepository.existsByUsername("John")).thenReturn(false);
         when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
 
-        // Мокируем поведение save
+        // Мокируем passwordEncoder
+        when(passwordEncoder.encode("1234")).thenReturn("encoded1234");
+
+        // Мокируем save — возвращаем объект с ID
         User savedUser = new User();
         savedUser.setId(1L);
         savedUser.setUsername("John");
         savedUser.setEmail("john@example.com");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        savedUser.setPassword("encoded1234");
 
-        // Мокируем passwordEncoder
-        when(passwordEncoder.encode("1234")).thenReturn("encoded1234");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         UserResponseDto response = userService.register(request);
 
@@ -47,6 +49,7 @@ public class UserServiceTest {
         // Проверяем, что событие отправилось
         verify(eventProducer).sendEvent("CREATE_USER", 1L, "John", 1L);
     }
+
 
     @Test
     void register_usernameTaken() {

@@ -1,102 +1,164 @@
 package com.example.wishlist.controllers;
 
-import com.example.wishlist.dto.ItemDTO;
+import com.example.wishlist.WishlistApplication;
+import com.example.wishlist.models.Item;
 import com.example.wishlist.models.User;
-import com.example.wishlist.service.Item.ItemService;
-import com.example.wishlist.service.User.SecurityUtils;
+import com.example.wishlist.repository.ItemRepository;
+import com.example.wishlist.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.mockito.Mockito;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Arrays;
-import java.util.List;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+@SpringBootTest(
+        classes = {
+                WishlistApplication.class,
+                ItemControllerIntegrationTest.TestConfig.class
+        }
+)
+@ActiveProfiles("test")
+@TestPropertySource(properties = {
+        "spring.cache.type=none",
+        "spring.autoconfigure.exclude=" +
+                "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration," +
+                "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration"
+})
+@Transactional
+@AutoConfigureMockMvc
+class ItemControllerIntegrationTest {
 
-class ItemControllerTest {
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public RabbitTemplate rabbitTemplate() {
+            return Mockito.mock(RabbitTemplate.class);
+        }
+    }
 
-    @Mock
-    private ItemService itemService;
+    @Autowired
+    private WebApplicationContext context;
 
-    @Mock
-    private SecurityUtils securityUtils;
+    @Autowired
+    private UserRepository userRepository;
 
-    @Mock
-    private Authentication authentication;
+    @Autowired
+    private ItemRepository itemRepository;
 
-    @InjectMocks
-    private ItemController itemController;
+    private MockMvc mockMvc;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
+        testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+        testUser.setPassword("password");
+        userRepository.save(testUser);
     }
 
     @Test
-    void getAll_shouldReturnItemsSorted() {
-        User user = new User();
-        List<ItemDTO> items = Arrays.asList(new ItemDTO(), new ItemDTO());
-        when(securityUtils.getCurrentUser(authentication)).thenReturn(user);
-        when(itemService.findAllSorted(user, "date", "asc")).thenReturn(items);
+    @WithMockUser(username = "testuser")
+    void getAll_shouldReturnItemsSorted() throws Exception {
+        Item item1 = new Item();
+        item1.setTitle("Item 1");
+        item1.setDescription("Description 1");
+        item1.setUser(testUser);
 
-        ResponseEntity<List<ItemDTO>> response = itemController.getAll(authentication, "date", "asc");
+        Item item2 = new Item();
+        item2.setTitle("Item 2");
+        item2.setDescription("Description 2");
+        item2.setUser(testUser);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(items, response.getBody());
-        verify(securityUtils).getCurrentUser(authentication);
-        verify(itemService).findAllSorted(user, "date", "asc");
+        itemRepository.save(item1);
+        itemRepository.save(item2);
+
+        mockMvc.perform(get("/api/items")
+                        .param("sortBy", "title")
+                        .param("sortOrder", "asc")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].title").value("Item 1"))
+                .andExpect(jsonPath("$[1].title").value("Item 2"));
     }
 
     @Test
-    void create_shouldCreateAndReturnItem() {
-        User user = new User();
-        ItemDTO itemDTO = new ItemDTO();
-        ItemDTO createdItem = new ItemDTO();
-        when(securityUtils.getCurrentUser(authentication)).thenReturn(user);
-        when(itemService.create(user, itemDTO)).thenReturn(createdItem);
+    @WithMockUser(username = "testuser")
+    void create_shouldCreateAndReturnItem() throws Exception {
+        String itemJson = """
+            {
+                "title": "New Item",
+                "description": "New Description"
+            }
+            """;
 
-        ResponseEntity<ItemDTO> response = itemController.create(authentication, itemDTO);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(createdItem, response.getBody());
-        verify(securityUtils).getCurrentUser(authentication);
-        verify(itemService).create(user, itemDTO);
+        mockMvc.perform(post("/api/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(itemJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("New Item"))
+                .andExpect(jsonPath("$.description").value("New Description"));
     }
 
     @Test
-    void update_shouldUpdateAndReturnItem() {
-        User user = new User();
-        Long id = 1L;
-        ItemDTO itemDTO = new ItemDTO();
-        ItemDTO updatedItem = new ItemDTO();
-        when(securityUtils.getCurrentUser(authentication)).thenReturn(user);
-        when(itemService.update(user, id, itemDTO)).thenReturn(updatedItem);
+    @WithMockUser(username = "testuser")
+    void update_shouldUpdateAndReturnItem() throws Exception {
+        Item item = new Item();
+        item.setTitle("Old Item");
+        item.setDescription("Old Description");
+        item.setUser(testUser);
+        Item savedItem = itemRepository.save(item);
 
-        ResponseEntity<ItemDTO> response = itemController.update(authentication, id, itemDTO);
+        String updatedItemJson = """
+            {
+                "title": "Updated Item",
+                "description": "Updated Description"
+            }
+            """;
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(updatedItem, response.getBody());
-        verify(securityUtils).getCurrentUser(authentication);
-        verify(itemService).update(user, id, itemDTO);
+        mockMvc.perform(put("/api/items/{id}", savedItem.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updatedItemJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated Item"))
+                .andExpect(jsonPath("$.description").value("Updated Description"));
     }
 
     @Test
-    void delete_shouldDeleteItemAndReturnNoContent() {
-        User user = new User();
-        Long id = 1L;
-        when(securityUtils.getCurrentUser(authentication)).thenReturn(user);
+    @WithMockUser(username = "testuser")
+    void delete_shouldDeleteItemAndReturnNoContent() throws Exception {
+        Item item = new Item();
+        item.setTitle("Item to delete");
+        item.setDescription("Description");
+        item.setUser(testUser);
+        Item savedItem = itemRepository.save(item);
 
-        ResponseEntity<Void> response = itemController.delete(authentication, id);
-
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(securityUtils).getCurrentUser(authentication);
-        verify(itemService).delete(user, id);
+        mockMvc.perform(delete("/api/items/{id}", savedItem.getId()))
+                .andExpect(status().isNoContent());
     }
 }

@@ -21,34 +21,32 @@ public class UserService{
         this.eventProducer = eventProducer;
     }
 
-    public UserResponseDto register(UserRegistrationRequest request){
+    public UserResponseDto register(UserRegistrationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("Username taken");
-        }
-        // Проверка email
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("Email taken");
+            throw new UserAlreadyExistsException("Username is already taken");
         }
 
-        // Создание нового пользователя
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("Email is already taken");
+        }
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // Сохранение в БД
         User savedUser = userRepository.save(user);
 
-        eventProducer.sendEvent("CREATE_USER", savedUser.getId(), savedUser.getUsername(), savedUser.getId());
+        // Отправляем событие
+        eventProducer.sendEvent("CREATE_USER", savedUser.getId(), savedUser.getUsername(), 1L);
 
-        // Возврат безопасного DTO
+        // Создаём DTO с ID из savedUser
         return new UserResponseDto(
                 savedUser.getId(),
                 savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getCreatedAt()
+                savedUser.getEmail()
         );
-
     }
+
 
 }

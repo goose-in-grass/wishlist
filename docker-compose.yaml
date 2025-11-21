@@ -18,6 +18,24 @@ services:
       start_period: 10s
       retries: 5
 
+
+  postgres_test:
+    image: postgres:17
+    restart: "no"
+    ports:
+      - "5433:5432"  # можно другой порт, чтобы не конфликтовать с основной
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: testdb
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7.4-alpine
     restart: "no"
@@ -60,3 +78,4 @@ services:
       retries: 5
 volumes:
   postgres_data:
+  postgres_test_data:
