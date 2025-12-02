@@ -1,75 +1,28 @@
-name: Build JARs
+name: Build JAR
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      JAVA_VERSION: '17' 
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'auto' # автокэш для Maven/Gradle
+          java-version: '17'
 
-      - name: Detect build tool and build
-        run: |
-          set -e
-          echo "Workspace: $GITHUB_WORKSPACE"
-          # Maven
-          if [ -f pom.xml ]; then
-            echo "Detected Maven project (pom.xml). Running mvn -B package"
-            mvn -B package
-          # Gradle (wrapper or installed)
-          elif [ -f gradlew ] || [ -f build.gradle ] || [ -f build.gradle.kts ]; then
-            echo "Detected Gradle project. Using Gradle wrapper if present."
-            if [ -f gradlew ]; then
-              chmod +x gradlew
-              ./gradlew --no-daemon clean build
-            else
-              gradle --no-daemon clean build
-            fi
-          else
-            echo "No pom.xml or build.gradle(.kts) found — nothing to build."
-            exit 0
-          fi
+      - name: Build with Maven
+        run: mvn -B package
 
-      - name: Collect JARs
-        run: |
-          set -e
-          mkdir -p artifacts/jars
-          # Find produced jars (exclude Gradle/Maven caches and test outputs)
-          find . -type f -name "*.jar" \
-            -not -path "./.gradle/*" \
-            -not -path "*/.mvn/*" \
-            -not -path "*/.idea/*" \
-            -not -path "*/target/dependency/*" \
-            -not -path "*/build/tmp/*" \
-            -print | tee all_jars.txt
-          if [ ! -s all_jars.txt ]; then
-            echo "No JARs found after build."
-            exit 1
-          fi
-          while read -r jar; do
-            cp "$jar" artifacts/jars/
-          done < all_jars.txt
-          ls -la artifacts/jars
-
-      - name: Upload JAR artifacts
+      - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: built-jars-${{ github.sha }}
-          path: artifacts/jars
-
-      - name: Show success
-        run: echo "Build finished and JARs uploaded as workflow artifacts."
+          name: built-jars
+          path: target/*.jar
