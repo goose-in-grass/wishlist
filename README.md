@@ -1,48 +1,165 @@
-# WishList Project
+---
 
-Простой веб-приложение на **Spring Boot**, позволяющее пользователям создавать и управлять списком желаний.
+# WishList
+
+Веб-приложение на **Spring Boot**, использующее PostgreSQL, Flyway, Redis (опционально) и RabbitMQ для асинхронной обработки событий.
 
 ---
 
-## ✨ Этапы работы
+## Технологии
 
-1. **Инициализация проекта**  
-   - Использован Spring Initializr.  
-   - Подключены зависимости: Spring Web, Spring Data JPA, Spring Security, Thymeleaf, Lombok, H2/MySQL.
+### Backend
 
-2. **Создание сущности `User` и связь с БД**  
-   - Добавлены поля: `id`, `username`, `email`, `password`, `createdAt`, `updatedAt`.  
-   - Установлена связь **один-ко-многим** с сущностью `Item`.
+* Spring Boot 3+
+* Spring Web
+* Spring Data JPA
+* Spring Security
+* Spring AMQP (RabbitMQ)
+* Thymeleaf
+* Flyway
+* Lombok
 
-3. **Создание сущности `Item`**  
-   - Поля: `id`, `title`, `description`, `createdAt`, `updatedAt`, `user`.  
-   - Настроена генерация ID и авто-заполнение времени создания/обновления.  
-   - Убрана уникальность поля `description`.
+### Storage & Messaging
 
-4. **Сервисный слой `ItemService`**  
-   - CRUD-операции: создание, обновление, удаление, получение всех элементов.  
-   - Используется `ItemDTO` для передачи данных между фронтендом и бекендом.  
-   - Обработка ошибок: проверка существования элементов и уникальности `title`.
+* **PostgreSQL** — основная база
+* **Redis** — кеш/сессии (если включён)
+* **RabbitMQ** — асинхронная обработка событий (регистрация, CRUD действий, нотификации)
 
-5. **Контроллеры**  
-   - `ItemController` — REST API `/api/items` с методами GET, POST, PUT, DELETE.  
-   - `WelcomeController` — отображение страниц Thymeleaf (`/home`, `/products`, `/login`, `/register`).  
-   - Реализован редирект с `/home` на `/products`, если пользователь не найден.
+### Инфраструктура
 
-6. **Безопасность**  
-   - Spring Security с формой логина/регистрации.  
-   - Настроены публичные эндпоинты (`/login`, `/register`, `/api/register`) и авторизация для остальных.  
-   - Пароли хранятся в базе в зашифрованном виде (BCrypt).
+* Docker & Docker Compose
+* Maven
+* GitHub Actions (тесты, coverage ≥ 60%)
 
-7. **Фронтенд**  
-   - **Thymeleaf** для отображения страниц.  
-   - `products.html` — тестовое API с кнопками:
-     - Добавить
-     - Обновить
-     - Все желания
-     - Удалить  
-   - Реализован динамический вывод данных: вместо сырых JSON-ответов отображается красивый блок с названием, описанием и датой создания.
+---
 
-8. **Git и версия проекта**  
-   - Работа велась с веткой `main`.  
-   - В случае расхождений с удалённым репозиторием использовался merge или rebase для синхронизации.
+## Быстрый старт
+
+### 1. Клонируем проект
+
+```bash
+git clone https://github.com/<your-user>/wishlist.git
+cd wishlist
+cp src/main/resources/application.example.yml src/main/resources/application.yml
+```
+
+### 2. Поднимаем инфраструктуру
+
+```bash
+docker-compose up -d --build
+```
+
+Поднимутся сервисы:
+
+| Сервис               | Порт  |
+| -------------------- | ----- |
+| PostgreSQL           | 5433  |
+| RabbitMQ (AMQP)      | 5672  |
+| RabbitMQ Admin UI    | 15672 |
+| Redis (если включён) | 6379  |
+| Приложение           | 8080  |
+
+### 3. Устанавливаем зависимости
+
+```bash
+./mvnw clean install
+```
+
+### 4. Миграции Flyway
+
+Автоматически применяются при запуске.
+
+Проверить вручную:
+
+```bash
+./mvnw flyway:info
+```
+
+---
+
+## Работа с RabbitMQ
+
+### Основные очереди (пример)
+
+* `wishlist.events` — события CRUD
+* `wishlist.email` — события регистрации
+* `wishlist.logging` — запись активности
+
+Все они создаются автоматически Spring Boot через `RabbitAdmin` и конфигурации.
+
+### Проверка работы
+
+Открыть панель администрирования:
+
+```
+http://localhost:15672
+login: guest  
+pass: guest
+```
+
+Там видно:
+
+* созданные очереди
+* биндинги
+* сообщения в очереди
+* ошибки потребителей
+
+---
+
+## Тестирование
+
+### Создать тестовую БД
+
+```bash
+docker-compose exec postgres psql -U postgres -c "CREATE DATABASE wishlist_test;"
+```
+
+### Применить миграции для тестовой БД
+
+```bash
+./mvnw flyway:migrate -Dspring.profiles.active=test
+```
+
+### Запуск тестов с покрытием
+
+```bash
+./mvnw clean test jacoco:report
+```
+
+### Просмотр отчёта
+
+```
+target/site/jacoco/index.html
+```
+
+---
+
+## Сервисы
+
+| Сервис         | URL                                                                  |
+| -------------- | -------------------------------------------------------------------- |
+| Web UI         | [http://localhost:8080](http://localhost:8080)                       |
+| API            | [http://localhost:8080/api/](http://localhost:8080/api/)...          |
+| Swagger        | [http://localhost:8080/swagger-ui](http://localhost:8080/swagger-ui) |
+| PostgreSQL     | localhost:5433                                                       |
+| RabbitMQ       | localhost:5672                                                       |
+| RabbitMQ Admin | [http://localhost:15672](http://localhost:15672)                     |
+
+---
+
+## CI/CD
+
+Включён GitHub Actions workflow:
+
+* запуск тестов при push в `main`
+* проверка покрытия Jacoco
+* публикация отчётов coverage
+* проверка стабильности основного кода
+
+Workflow расположен здесь:
+
+```
+.github/workflows/ci.yml
+```
+
+
