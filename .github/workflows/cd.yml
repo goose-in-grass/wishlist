@@ -17,8 +17,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: goose-in-grass
+          password: ${{ secrets.GOOSEINGRASS }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -26,8 +26,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/wishlist:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/wishlist:${{ github.sha }}
+            goose-in-grass/wishlist:latest
+            goose-in-grass/wishlist:${{ github.sha }}
 
       - name: Log out from Docker Hub
         run: docker logout
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_PASS }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/wishlist:${{ github.sha }}
+            docker pull goose-in-grass/wishlist:${{ github.sha }}
             docker stop my_container || true
             docker rm my_container || true
-            docker run -d --name my_container -p 80:8080 ${{ secrets.DOCKERHUB_USERNAME }}/wishlist:${{ github.sha }}
+            docker run -d --name my_container -p 80:8080 goose-in-grass/wishlist:${{ github.sha }}
