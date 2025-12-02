@@ -1,45 +1,75 @@
-name: CD
+name: Build JARs
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    env:
+      JAVA_VERSION: '17' 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          username: goose-in-grass
-          password: ${{ secrets.GOOSEINGRASS }}
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'auto' # автокэш для Maven/Gradle
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Detect build tool and build
+        run: |
+          set -e
+          echo "Workspace: $GITHUB_WORKSPACE"
+          # Maven
+          if [ -f pom.xml ]; then
+            echo "Detected Maven project (pom.xml). Running mvn -B package"
+            mvn -B package
+          # Gradle (wrapper or installed)
+          elif [ -f gradlew ] || [ -f build.gradle ] || [ -f build.gradle.kts ]; then
+            echo "Detected Gradle project. Using Gradle wrapper if present."
+            if [ -f gradlew ]; then
+              chmod +x gradlew
+              ./gradlew --no-daemon clean build
+            else
+              gradle --no-daemon clean build
+            fi
+          else
+            echo "No pom.xml or build.gradle(.kts) found — nothing to build."
+            exit 0
+          fi
+
+      - name: Collect JARs
+        run: |
+          set -e
+          mkdir -p artifacts/jars
+          # Find produced jars (exclude Gradle/Maven caches and test outputs)
+          find . -type f -name "*.jar" \
+            -not -path "./.gradle/*" \
+            -not -path "*/.mvn/*" \
+            -not -path "*/.idea/*" \
+            -not -path "*/target/dependency/*" \
+            -not -path "*/build/tmp/*" \
+            -print | tee all_jars.txt
+          if [ ! -s all_jars.txt ]; then
+            echo "No JARs found after build."
+            exit 1
+          fi
+          while read -r jar; do
+            cp "$jar" artifacts/jars/
+          done < all_jars.txt
+          ls -la artifacts/jars
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          push: true
-          tags: |
-            goose-in-grass/wishlist:latest
-            goose-in-grass/wishlist:${{ github.sha }}
+          name: built-jars-${{ github.sha }}
+          path: artifacts/jars
 
-      - name: Log out from Docker Hub
-        run: docker logout
-
-      - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          password: ${{ secrets.REMOTE_PASS }}
-          script: |
-            docker pull goose-in-grass/wishlist:${{ github.sha }}
-            docker stop my_container || true
-            docker rm my_container || true
-            docker run -d --name my_container -p 80:8080 goose-in-grass/wishlist:${{ github.sha }}
+      - name: Show success
+        run: echo "Build finished and JARs uploaded as workflow artifacts."
