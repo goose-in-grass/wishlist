@@ -1,38 +1,58 @@
-  name: CI
+name: CI
 
-  on:
-    push:
-      branches: [ main ]
-    pull_request:
+on:
+  push:
+    branches: [ main ]
+  pull_request:
 
-  jobs:
-    test:
-      runs-on: ubuntu-latest
+jobs:
+  test:
+    runs-on: ubuntu-latest
 
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v3
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: ci_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_user -d ci_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-        - name: Set up JDK
-          uses: actions/setup-java@v4
-          with:
-            java-version: '17'
-            distribution: 'temurin'
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ci_db
+      SPRING_DATASOURCE_USERNAME: ci_user
+      SPRING_DATASOURCE_PASSWORD: ci_password
 
-        - name: Cache Maven packages
-          uses: actions/cache@v3
-          with:
-            path: |
-              ~/.m2/repository
-            key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-            restore-keys: |
-              ${{ runner.os }}-maven-
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-        - name: Run tests with coverage
-          run: mvn clean test jacoco:report
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-        - name: Upload coverage report
-          uses: actions/upload-artifact@v3
-          with:
-            name: jacoco-report
-            path: target/site/jacoco/
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run tests with coverage
+        run: mvn clean test jacoco:report
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
