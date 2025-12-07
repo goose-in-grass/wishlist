@@ -1,16 +1,15 @@
 package com.example.wishlist.controllers;
 
-
 import com.example.wishlist.models.User;
 import com.example.wishlist.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
+@Hidden // Скрываем контроллер из Swagger документации, так как это view контроллер
 public class WelcomController {
     private final UserRepository userRepository;
 
@@ -27,9 +26,8 @@ public class WelcomController {
     @GetMapping("/login")
     public String loginPage(Model model) {
         model.addAttribute("title", "Вход");
-        return "login"; // register.html в папке templates
+        return "login"; // login.html в папке templates
     }
-
 
     @GetMapping("/home")
     public String home(Model model, Authentication authentication) {
@@ -50,7 +48,4 @@ public class WelcomController {
         model.addAttribute("title", "Products");
         return "products"; // products.html в templates
     }
-
-
-
 }

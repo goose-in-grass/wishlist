@@ -22,7 +22,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
-
   rabbitmq:
     host: rabbitmq
     port: 5672
@@ -44,6 +43,12 @@ spring:
     redis:
       host: redis
       port: 6379
+
+  doc:
+    swagger-ui:
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs
 
 server:
   port: 8080
